@@ -1,0 +1,47 @@
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: blog_postgres
+    environment:
+      POSTGRES_DB: blog_db
+      POSTGRES_USER: blog_user
+      POSTGRES_PASSWORD: blog_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  # NestJS Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blog_api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: blog_db
+      DATABASE_USER: blog_user
+      DATABASE_PASSWORD: blog_password
+      DATABASE_URL: postgresql://blog_user:blog_password@postgres:5432/blog_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - blog_network
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+
+volumes:
+  postgres_data:
+
